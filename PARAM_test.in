@@ -1,0 +1,394 @@
+Begin session: 1
+
+#DESCRIPTION
+SWMFSOLAR/Param/PARAM.in.awsom.CME: restart from background run and initiate CME_test1		StringDescription
+
+#INCLUDE
+RESTART.in
+
+#COMPONENTMAP
+SC 0 -1 1		CompMap
+IH 0 -1 1		CompMap
+
+#CPUTIMEMAX
+24 hours		CpuTimeMax
+
+#CHECKSTOP
+T			DoCheckStop
+-1			DnCheckStop
+10 mins			DtCheckStop
+
+#TIMEACCURATE
+T			IsTimeAccurate
+
+STARTTIME		^
+2011			iYear
+03			iMonth
+07			iDay
+08			iHour
+00			iMinute
+00			iSecond
+0.0			FracSecond
+
+#SAVERESTART
+T			DoSaveRestart
+-1			DnSaveRestart
+1800.0			DtSaveRestart
+
+ROTATEHGR		^
+-1.			dLongitudeHgr^
+
+ROTATEHGI		^
+-1.			dLongitudeHgi^
+
+#TEST
+init_axes		StringTest
+
+#BEGIN_COMP SC ---------------------------------------------------------------
+
+#GRIDBLOCKALL
+200000			MaxBlock
+
+#INCLUDE
+SC/restartIN/restart.H
+
+#RESTARTOUTFILE
+one			StringRestartOutFile
+
+#COORDSYSTEM
+HGR			TypeCoordSystem
+
+#PLASMA
+1.0			FluidMass [amu]
+1.0			IonCharge [e]
+1.0			ElectronTemperatureRatio
+
+#HELIODIPOLE
+5.0e-4                  HelioDipoleStrengthSi
+0.0                     HelioDipoleTiltDeg
+
+LOOKUPTABLE		FDIPS^
+B0			NameTable
+load			NameCommand
+SC/fdips_bxyz.out		NameFile
+real4			TypeFile
+
+HARMONICSGRID		^
+1.0			rMagnetogram
+25			rSourceSurface^
+T			IsLogRadius^
+180			MaxOrder
+400			nR
+180			nLon
+90			nLat
+
+FACTORB0		^
+1.0			FactorB0^
+
+#POYNTINGFLUX
+1.0e6			PoyntingFluxPerBSi^ [J/m^2/s/T]
+
+#CORONALHEATING
+turbulentcascade		TypeCoronalHeating
+1.5e5			LperpTimesSqrtBSi^
+0.0			rMinWaveReflection^
+F			UseReynoldsDecomposition^
+
+#HEATPARTITIONING
+stochasticheating		TypeHeatPartitioning
+0.21			StochasticExponent^
+0.18			StochasticAmplitude^
+
+#RADIATIVECOOLING
+T			UseRadCooling
+
+#LOOKUPTABLE
+radcool			NameTable
+load			NameCommand
+SC/Param/RadCoolCorona_8.0.dat		NameFile
+ascii			TypeFile
+
+#USERINPUTBEGIN -----------------------------------
+
+#CHROMOBC
+2.0e17			NchromoSi	nChromoSi_AWSoM^
+5e4			TchromoSi
+
+#EXTRADIPOLE
+50e-4                   UserDipoleStrengthSi 
+0.2                     UserDipoleDepth
+0.0                     UserDipoleLatitude
+180.0                   UserDipoleLongitude
+-90.0                   UserDipoleAxisLatitude
+0.0                     UserDipoleAxisLongitude
+
+#USERINPUTEND -------------------------------------
+
+#TRANSITIONREGION
+T			DoExtendTransitionRegion
+2.2e5			TeTransitionRegionSi
+1.0e1			DeltaTeModSi
+
+#COARSEAXIS
+T			UseCoarseAxis
+2			nCoarseLayer
+
+turn these off when restarting
+---------------------------------------------------
+GRIDGEOMETRY
+spherical_genr		TypeGeometry
+SC/Param/grid_awsom.dat		NameGridFile
+
+! Use a true sphere, so box is made much larger
+GRID
+2			nRootBlock1
+2			nRootBlock2
+1			nRootBlock3
+-100.0			xMin
+ 100.0			xMax
+-100.0			yMin
+ 100.0			yMax
+-100.0			zMin
+ 100.0			zMax
+
+LIMITRADIUS
+1.0			rMin
+24.0			rMax
+
+----------------------------------------------------
+#AMRREGION
+InnerShell		NameRegion
+shell0			StringShape
+1.0			RadiusInner
+1.7			Radius
+
+#AMRREGION
+earthcone		NameRegion
+conex0 GSE		StringShape
+-24.			Height
+5.			Radius
+
+#AMRREGION
+cmecone			NameRegion
+conex0 GSE		StringShape
+-24.			Height
+9.			Radius
+
+#AMRREGION
+cmebox			NameRegion
+box_gen HGR		StringShape
+1.0			xMin
+160.0			yMin LonCME_min^
+-20.0			zMin LatCME_min^
+1.5			xMax
+200.0			yMax LonCME_max^
+20.0			zMax LatCME_max^
+
+AMRCRITERIARESOLUTION		regular_grid^
+3			nRefineCrit
+dphi			StringRefine
+3.0			RefineTo
+1.5			CoarsenFrom
+dphi Innershell		StringRefine
+1.5  			RefineTo
+0.75			CoarsenFrom
+currentsheet		StringRefine
+0.5			CoarsenLimit
+0.5			RefineLimit
+1.5			MaxResolution
+
+#AMRCRITERIARESOLUTION	
+6			nRefineCrit
+dphi			StringRefine
+3.0			RefineTo
+1.5			CoarsenFrom
+dphi Innershell		StringRefine
+1.5  			RefineTo
+0.75			CoarsenFrom
+dphi cmecone		StringRefine
+1.5/2			RefineTo
+0.75/2			CoarsenFrom
+dphi earthcone		StringRefine
+1.5/4			RefineTo
+0.75/4			CoarsenFrom
+dphi cmebox		StringRefine	 	
+1.5/4			RefineTo
+0.75/4			CoarsenFrom
+currentsheet		StringRefine
+0.5			CoarsenLimit
+0.5			RefineLimit
+1.5			MaxResolution
+
+#GRIDRESOLUTION
+1.5			Resolution
+initial			StringShape
+
+#DOAMR
+F			DoAmr
+
+#TIMESTEPPING
+2			nStage
+0.8			CflExpl
+
+#SCHEME
+2			nOrder (1 or 2)
+Linde			TypeFlux (Roe, Rusanov, Linde, Sokolov
+mc3			TypeLimiter
+1.2			LimiterBeta
+
+#LIMITER
+T			UseLogRhoLimiter
+T			UseLogPLimiter
+F			UseRhoRatioLimiter
+
+#MINIMUMTEMPERATURE
+5e4			TminDim  [K] for fluid 1
+5e4			TeMinDim [K]
+
+#MINIMUMPRESSURE
+1E-9			pMinDim for fluid 1
+1E-9			PeMinDim
+
+MINIMUMRADIALSPEED
+T			UseSpeedMin
+10			rSpeedMin
+250			SpeedMinDim
+10 h			TauSpeedMinDim
+
+#NONCONSERVATIVE
+F			UseNonConservative^
+
+#RESCHANGE
+T			UseAccurateReschange
+
+#SAVELOGFILE
+T			DoSaveLogfile
+VAR			StringLog
+-1			DnSaveLogfile
+120.			DtSaveLogfile
+rho mx my mz p pmin urmin urmax dt	NameLogVars
+
+#OUTERBOUNDARY
+user			TypeBc1   user for spherical and user_outerbcs
+float			TypeBc2   rMax
+periodic		TypeBc3   LonMin
+periodic		TypeBc4   LonMax
+periodic		TypeBc5   LatMin
+periodic		TypeBc6   LatMax
+
+------------ CME related parameters -------------------------------------------
+
+#UPDATECHECK
+F			UseUpdateCheck
+
+#TIMESTEPLIMIT
+T			UseDtLimit
+0.1			DtLimitDim
+
+#PARTLOCALTIMESTEP
+1.05			rLocalTimeStep
+
+add the perturb switch for CME
+#USERSWITCH		sc_cme^
++init +ic +B0 +perturb	StringSwitch
+
+flux-rope parameters
+#CME
+T			UseCme^
+T			DoAddFluxRope
+-1			tDecayCme^
+180			LongitudeCme^
+0			LatitudeCme^
+90			OrientationCme^
+GL			TypeCme
+15			BStrength^
+-1			iHelicity^
+0.5			Radius^
+0.60			Stretch^
+0.7			ApexHeight^
+
+-------------------------------------------------------------------------------
+SAVETECPLOT
+T			DoSaveOneTecFile
+
+save frequently for first few hours
+#SAVEPLOT
+5			nPlotFile
+x=0 VAR tcp		StringPlot
+-1			DnSavePlot
+600.0			DtSavePlot
+{MHD} te ti		NameVars
+{default}		NamePars
+y=0 VAR tcp		StringPlot
+-1			DnSavePlot
+600.			DtSavePlot
+{MHD} te ti		NameVars
+{default}		NamePars
+z=0 VAR tcp		StringPlot
+-1			DnSavePlot
+600.			DtSavePlot
+{MHD} te ti             NameVars
+{default}               NamePars
+3d VAR tcp              StringPlot
+10000                   DnSavePlot
+-1.                     DtSavePlot
+{MHD} te ti             NameVars
+{default}               NamePars
+
+SATELLITE
+3			nSatellite
+MHD			StringSatellite
+-1			DnOutput
+-1.0			DtOutput [sec]
+SC/TRAJECTORY/earth.dat		NameTrajectoryFile
+MHD			StringSatellite
+-1			DnOutput
+-1.0			DtOutput [sec]
+SC/TRAJECTORY/sta.dat		NameTrajectoryFile
+MHD			StringSatellite
+-1			DnOutput
+-1.0			DtOutput [sec]
+SC/TRAJECTORY/stb.dat		NameTrajectoryFile
+
+LOOKUPTABLE
+AiaXrt			NameTable
+load			NameCommand
+SC/Param/los_tbl.dat		NameFile
+ascii			TypeFile
+
+LOOKUPTABLE
+euv			NameTable
+load			NameCommand
+SC/Param/los_Eit_cor.dat		NameFile
+ascii			TypeFile
+
+LOOKUPTABLE
+EuviA			NameTable
+load			NameCommand
+SC/Param/los_EuviA.dat		NameFile
+ascii			TypeFile
+
+LOOKUPTABLE
+EuviB			NameTable
+load			NameCommand
+SC/Param/los_EuviB.dat		NameFile
+ascii			TypeFile
+
+#SAVEINITIAL
+T			DoSaveInitial
+
+#END_COMP SC -----------------------------------------------------------------
+
+#COMPONENT
+IH			NameComp
+F			UseComp
+
+#STOP
+-1			MaxIter
+1 h			TimeMax^
+
+End session: 1
+
+END			sc_only^
+
+#RUN ##########################################################################
